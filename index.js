@@ -16,23 +16,24 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const uid = match[1].trim();
 
-  bot.sendMessage(chatId, "🔍 তথ্য খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...");
+  // ১. প্রথমে ওয়েটিং মেসেজটি পাঠানো হচ্ছে এবং মেসেজটির আইডি সেভ করা হচ্ছে
+  const loadingMsg = await bot.sendMessage(chatId, "🔍 তথ্য খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...");
 
   try {
     const response = await axios.get(`https://nirob-x-info.vercel.app/info?uid=${uid}`);
     const data = response.data;
 
     if (!data || !data.basicInfo) {
+      // ওয়েটিং মেসেজটি ডিলিট করা
+      bot.deleteMessage(chatId, loadingMsg.message_id);
       return bot.sendMessage(chatId, "❌ কোনো তথ্য পাওয়া যায়নি। সঠিক UID দিন।");
     }
 
     const basic = data.basicInfo;
     const clan = data.clanBasicInfo || {};
-    const pet = data.petInfo || {};
-    const social = data.socialInfo || {};
 
-    const text = `
-🎮 **Free Fire Player Information**
+    // ২. শুধুমাত্র আপনার প্রয়োজনীয় তথ্যগুলো কাস্টমাইজ করে সাজানো হয়েছে
+    const text = `🎮 **Free Fire Player Information**
 
 👤 **Basic Info:**
 • **Name:** ${basic.nickname || 'N/A'}
@@ -41,34 +42,21 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 • **Likes:** ${basic.liked || 0}
 • **Region:** ${basic.region || 'N/A'}
 
-🏆 **Rank Information:**
-• **BR Points:** ${basic.rankingPoints || 'N/A'}
-• **CS Points:** ${basic.csRankingPoints || 'N/A'}
-
 🏠 **Guild Information:**
 • **Name:** ${clan.clanName || 'None'}
 • **ID:** ${clan.clanId || 'N/A'}
 • **Level:** ${clan.clanLevel || 'N/A'}
-• **Members:** ${clan.memberNum || 0}/${clan.capacity || 0}
+• **Members:** ${clan.memberNum || 0}/${clan.capacity || 0}`;
 
-🐾 **Pet Information:**
-• **Name:** ${pet.name || 'None'}
-• **Level:** ${pet.level || 'N/A'}
+    // ৩. ওয়েটিং মেসেজটি মুছে ফেলা
+    await bot.deleteMessage(chatId, loadingMsg.message_id);
 
-📊 **Other Stats:**
-• **Badges:** ${basic.badgeCnt || 0}
-• **Version:** ${basic.releaseVersion || 'N/A'}
-
-🔰 **Social Info:**
-• **Gender:** ${social.gender ? social.gender.replace('Gender_', '') : 'N/A'}
-• **Language:** ${social.language ? social.language.replace('Language_', '') : 'N/A'}
-• **Mode Prefer:** ${social.modePrefer ? social.modePrefer.replace('ModePrefer_', '') : 'N/A'}
-`;
-
+    // ৪. মূল মেসেজ পাঠাল
     bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
 
   } catch (error) {
     console.error(error);
+    await bot.deleteMessage(chatId, loadingMsg.message_id);
     bot.sendMessage(chatId, "❌ তথ্য নিয়ে আসার সময় একটি সমস্যা হয়েছে।");
   }
 });
