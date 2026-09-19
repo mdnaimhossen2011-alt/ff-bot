@@ -16,7 +16,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
   const chatId = msg.chat.id;
   const uid = match[1].trim();
 
-  // ১. প্রথমে ওয়েটিং মেসেজটি পাঠানো হচ্ছে এবং মেসেজটির আইডি সেভ করা হচ্ছে
+  // ১. ওয়েটিং মেসেজ পাঠানো
   const loadingMsg = await bot.sendMessage(chatId, "🔍 তথ্য খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...");
 
   try {
@@ -24,15 +24,14 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
     const data = response.data;
 
     if (!data || !data.basicInfo) {
-      // ওয়েটিং মেসেজটি ডিলিট করা
-      bot.deleteMessage(chatId, loadingMsg.message_id);
+      await bot.deleteMessage(chatId, loadingMsg.message_id);
       return bot.sendMessage(chatId, "❌ কোনো তথ্য পাওয়া যায়নি। সঠিক UID দিন।");
     }
 
     const basic = data.basicInfo;
     const clan = data.clanBasicInfo || {};
 
-    // ২. শুধুমাত্র আপনার প্রয়োজনীয় তথ্যগুলো কাস্টমাইজ করে সাজানো হয়েছে
+    // ২. শুধুমাত্র আপনার নির্দিষ্ট ফরম্যাটে কাস্টমাইজড তথ্য
     const text = `🎮 **Free Fire Player Information**
 
 👤 **Basic Info:**
@@ -48,15 +47,17 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 • **Level:** ${clan.clanLevel || 'N/A'}
 • **Members:** ${clan.memberNum || 0}/${clan.capacity || 0}`;
 
-    // ৩. ওয়েটিং মেসেজটি মুছে ফেলা
+    // ৩. ওয়েটিং মেসেজটি ডিলিট করা
     await bot.deleteMessage(chatId, loadingMsg.message_id);
 
-    // ৪. মূল মেসেজ পাঠাল
+    // ৪. ফাইনাল রেজাল্ট মেসেজ পাঠানো
     bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
 
   } catch (error) {
     console.error(error);
-    await bot.deleteMessage(chatId, loadingMsg.message_id);
+    try {
+      await bot.deleteMessage(chatId, loadingMsg.message_id);
+    } catch (e) {}
     bot.sendMessage(chatId, "❌ তথ্য নিয়ে আসার সময় একটি সমস্যা হয়েছে।");
   }
 });
