@@ -61,3 +61,14 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
     bot.sendMessage(chatId, "❌ তথ্য নিয়ে আসার সময় একটি সমস্যা হয়েছে।");
   }
 });
+const http = require('http');
+
+// Render-এর দেওয়া PORT ধরবে, না পেলে 3000 ব্যবহার করবে
+const PORT = process.env.PORT || 3000;
+
+http.createServer((req, res) => {
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Bot is alive!');
+}).listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
