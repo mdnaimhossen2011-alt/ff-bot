@@ -68,7 +68,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             `• **Level:** ${basic.level || 'N/A'}\n` +
             `• **Likes:** ${basic.liked || 0}\n` +
             `• **Region:** ${basic.region || 'N/A'}\n\n` +
-            `🏰 **Guild Information:**\n` +
+            `🏠 **Guild Information:**\n` +
             `• **Name:** ${clan.clanName || 'None'}\n` +
             `• **ID:** ${clan.clanId || 'N/A'}\n` +
             `• **Level:** ${clan.clanLevel || 'N/A'}\n` +
