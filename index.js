@@ -5,6 +5,9 @@ const http = require('http');
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
+// আপনার প্রধান গ্রুপের লিংক (প্রয়োজন হলে লিংক পরিবর্তন করে নেবেন)
+const GROUP_LINK = "https://t.me/ffallbots";
+
 // রিয়্যাকশন দেওয়ার জন্য ইমোজি লিস্ট
 const UNIQUE_EMOJIS = [
     "👍", "👎", "❤️", "🔥", "🥰", "👏", "😁", "🤔", 
@@ -18,13 +21,48 @@ const UNIQUE_EMOJIS = [
     "😡"
 ];
 
-// ১. অটো রিয়্যাকশন লজিক (টেলিগ্রামের অফিসিয়াল API ব্যবহার করে)
+// ১. ইনবক্সে শুধু /start কমান্ড এলে এই মেসেজটি পাঠাবে
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
+    const chatType = msg.chat.type;
+
+    // যদি মেসেজটি ইনবক্স (private) থেকে আসে
+    if (chatType === 'private') {
+        const textMessage = 
+            "⚠️ **এই বটটি ইনবক্সে কাজ করবে না!**\n\n" +
+            "বটটি ব্যবহার করার জন্য আমাদের অফিশিয়াল গ্রুপে যুক্ত হয়ে কমান্ড দিন।";
+
+        const options = {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: "📢 গ্রুপে যুক্ত হন", url: GROUP_LINK }
+                    ]
+                ]
+            }
+        };
+
+        return bot.sendMessage(chatId, textMessage, options);
+    }
+});
+
+// ২. অটো রিয়্যাকশন লজিক (শুধু গ্রুপে কাজ করবে)
 bot.on('message', async (msg) => {
+    const chatId = msg.chat.id;
+    const chatType = msg.chat.type;
+
+    // ইনবক্সে সাধারণ মেসেজ আসলে বট একদম নীরব থাকবে (কোনো রিপ্লাই বা রিঅ্যাকশন দেবে না)
+    if (chatType !== 'group' && chatType !== 'supergroup') {
+        return;
+    }
+
+    // শুধু গ্রুপেই প্রতিটি মেসেজে অটো-রিঅ্যাকশন দেবে
     try {
         const randomEmoji = UNIQUE_EMOJIS[Math.floor(Math.random() * UNIQUE_EMOJIS.length)];
         
         await axios.post(`https://api.telegram.org/bot${token}/setMessageReaction`, {
-            chat_id: msg.chat.id,
+            chat_id: chatId,
             message_id: msg.message_id,
             reaction: JSON.stringify([{ type: 'emoji', emoji: randomEmoji }])
         });
@@ -33,20 +71,17 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ২. /start কমান্ড
-bot.onText(/\/start/, (msg) => {
-    bot.sendMessage(
-        msg.chat.id,
-        "🎮 **Free Fire Info Bot-এ স্বাগতম!**\n\nতথ্য জানতে কমান্ড লিখুন: `/info <UID>`\nউদাহরণ: `/info 884707253`",
-        { parse_mode: 'Markdown' }
-    );
-});
-
-// ৩. /info কমান্ড (UID Checker)
+// ৩. /info কমান্ড (শুধু গ্রুপেই ইউআইডি চেক করবে)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
-    const uid = match[1].trim();
+    const chatType = msg.chat.type;
 
+    // গ্রুপে না থাকলে /info কমান্ড রেসপন্স করবে না
+    if (chatType !== 'group' && chatType !== 'supergroup') {
+        return;
+    }
+
+    const uid = match[1].trim();
     const loadingMsg = await bot.sendMessage(chatId, "🔍 তথ্য খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...");
 
     try {
@@ -86,7 +121,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
     }
 });
 
-// Render-এর জন্য Port
+// Render-এর জন্য Port তৈরি করা
 const PORT = process.env.PORT || 3000;
 
 http.createServer((req, res) => {
