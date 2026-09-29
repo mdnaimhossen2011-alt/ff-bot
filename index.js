@@ -18,15 +18,18 @@ const UNIQUE_EMOJIS = [
     "😡"
 ];
 
-// ১. অটো রিয়্যাকশন লজিক (সব মেসেজে রিয়্যাকশন দেবে)
+// ১. অটো রিয়্যাকশন লজিক (টেলিগ্রামের অফিসিয়াল API ব্যবহার করে)
 bot.on('message', async (msg) => {
     try {
         const randomEmoji = UNIQUE_EMOJIS[Math.floor(Math.random() * UNIQUE_EMOJIS.length)];
-        await bot.setMessageReaction(msg.chat.id, msg.message_id, {
-            reaction: [{ type: 'emoji', emoji: randomEmoji }]
+        
+        await axios.post(`https://api.telegram.org/bot${token}/setMessageReaction`, {
+            chat_id: msg.chat.id,
+            message_id: msg.message_id,
+            reaction: JSON.stringify([{ type: 'emoji', emoji: randomEmoji }])
         });
     } catch (error) {
-        console.error('Reaction Error:', error.message);
+        console.error('Reaction Error:', error.response ? error.response.data : error.message);
     }
 });
 
@@ -83,7 +86,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
     }
 });
 
-// Render-এর জন্য Port তৈরি করা
+// Render-এর জন্য Port
 const PORT = process.env.PORT || 3000;
 
 http.createServer((req, res) => {
