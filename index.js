@@ -5,7 +5,7 @@ const http = require('http');
 const token = process.env.BOT_TOKEN;
 const bot = new TelegramBot(token, { polling: true });
 
-// আপনার প্রধান গ্রুপের লিংক (প্রয়োজন হলে লিংক পরিবর্তন করে নেবেন)
+// আপনার প্রধান গ্রুপের লিংক
 const GROUP_LINK = "https://t.me/ffallbots";
 
 // রিয়্যাকশন দেওয়ার জন্য ইমোজি লিস্ট
@@ -21,12 +21,11 @@ const UNIQUE_EMOJIS = [
     "😡"
 ];
 
-// ১. ইনবক্সে শুধু /start কমান্ড এলে এই মেসেজটি পাঠাবে
+// ১. ইনবক্সে শুধু /start কমান্ড এলে বার্তা পাঠাবে
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
 
-    // যদি মেসেজটি ইনবক্স (private) থেকে আসে
     if (chatType === 'private') {
         const textMessage = 
             "⚠️ **এই বটটি ইনবক্সে কাজ করবে না!**\n\n" +
@@ -47,17 +46,49 @@ bot.onText(/\/start/, (msg) => {
     }
 });
 
-// ২. অটো রিয়্যাকশন লজিক (শুধু গ্রুপে কাজ করবে)
+// ২. /help কমান্ড (গ্রুপে সাহায্য পাওয়ার নির্দেশিকা)
+bot.onText(/\/help/, (msg) => {
+    const chatId = msg.chat.id;
+    const chatType = msg.chat.type;
+
+    // সাহায্য বার্তাটি শুধু গ্রুপেই দেখাবে
+    if (chatType === 'group' || chatType === 'supergroup') {
+        const helpMessage = 
+            "📖 **বট ব্যবহার করার নির্দেশিকা:**\n\n" +
+            " **Player Info দেখতে:**\n" +
+            "   • লিখুন: `/info <UID>`\n" +
+            "   • উদাহরণ: `/info 884707253`\n\n" +
+            "💡 *মনে রাখবেন: বটটি শুধুমাত্র গ্রুপেই কাজ করে!*";
+
+        const options = {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: "📢 আমাদের গ্রুপ লিংক", url: GROUP_LINK }
+                    ]
+                ]
+            }
+        };
+
+        bot.sendMessage(chatId, helpMessage, options);
+    }
+});
+
+// ৩. অটো রিয়্যাকশন লজিক (শুধু গ্রুপে কাজ করবে)
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
 
-    // ইনবক্সে সাধারণ মেসেজ আসলে বট একদম নীরব থাকবে (কোনো রিপ্লাই বা রিঅ্যাকশন দেবে না)
     if (chatType !== 'group' && chatType !== 'supergroup') {
         return;
     }
 
-    // শুধু গ্রুপেই প্রতিটি মেসেজে অটো-রিঅ্যাকশন দেবে
+    // /help বা /info কমান্ড দিলে মেসেজে রিঅ্যাকশন দেবে না, সাধারণ মেসেজে দেবে
+    if (msg.text && (msg.text.startsWith('/help') || msg.text.startsWith('/info'))) {
+        return;
+    }
+
     try {
         const randomEmoji = UNIQUE_EMOJIS[Math.floor(Math.random() * UNIQUE_EMOJIS.length)];
         
@@ -71,12 +102,11 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ৩. /info কমান্ড (শুধু গ্রুপেই ইউআইডি চেক করবে)
+// ৪. /info কমান্ড (ইউআইডি চেক করবে)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
 
-    // গ্রুপে না থাকলে /info কমান্ড রেসপন্স করবে না
     if (chatType !== 'group' && chatType !== 'supergroup') {
         return;
     }
@@ -103,7 +133,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             `• **Level:** ${basic.level || 'N/A'}\n` +
             `• **Likes:** ${basic.liked || 0}\n` +
             `• **Region:** ${basic.region || 'N/A'}\n\n` +
-            `🏠 **Guild Information:**\n` +
+            `🏰 **Guild Information:**\n` +
             `• **Name:** ${clan.clanName || 'None'}\n` +
             `• **ID:** ${clan.clanId || 'N/A'}\n` +
             `• **Level:** ${clan.clanLevel || 'N/A'}\n` +
@@ -121,7 +151,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
     }
 });
 
-// Render-এর জন্য Port তৈরি করা
+// Render-এর জন্য Port
 const PORT = process.env.PORT || 3000;
 
 http.createServer((req, res) => {
