@@ -21,7 +21,7 @@ const UNIQUE_EMOJIS = [
     "😡"
 ];
 
-// ১. ইনবক্সে শুধু /start কমান্ড এলে বার্তা পাঠাবে
+// ১. ইনবক্সে শুধু /start কমান্ড এলে বার্তা পাঠাবে (গ্রুপ বাটনসহ)
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -46,32 +46,20 @@ bot.onText(/\/start/, (msg) => {
     }
 });
 
-// ২. /help কমান্ড (গ্রুপে সাহায্য পাওয়ার নির্দেশিকা)
+// ২. /help কমান্ড (গ্রুপে সাহায্য পাওয়ার নির্দেশিকা - কোনো বাটন থাকবে না)
 bot.onText(/\/help/, (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
 
-    // সাহায্য বার্তাটি শুধু গ্রুপেই দেখাবে
     if (chatType === 'group' || chatType === 'supergroup') {
         const helpMessage = 
             "📖 **বট ব্যবহার করার নির্দেশিকা:**\n\n" +
-            " **Player Info দেখতে:**\n" +
-            "   • লিখুন: `/info <UID>`\n" +
-            "   • উদাহরণ: `/info 884707253`\n\n" +
+            "**Player Info দেখতে:**\n" +
+            "• লিখুন: `/info <UID>`\n" +
+            "• উদাহরণ: `/info 884707253` \n\n" +
             "💡 *মনে রাখবেন: বটটি শুধুমাত্র গ্রুপেই কাজ করে!*";
 
-        const options = {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: "📢 আমাদের গ্রুপ লিংক", url: GROUP_LINK }
-                    ]
-                ]
-            }
-        };
-
-        bot.sendMessage(chatId, helpMessage, options);
+        bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
     }
 });
 
