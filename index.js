@@ -11,7 +11,7 @@ const UNIQUE_EMOJIS = [
     "👍", "❤️", "🔥", "🥰", "👏", "😁", "🎉", "🤩", "🙏", "👌"
 ];
 
-// ১. স্টার্ট কমান্ড
+// ১. স্টার্ট কমান্ড (/start)
 bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -30,7 +30,7 @@ bot.onText(/\/start/, (msg) => {
     }
 });
 
-// ২. হেল্প কমান্ড
+// ২. হেল্প কমান্ড (/help)
 bot.onText(/\/help/, (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -45,7 +45,7 @@ bot.onText(/\/help/, (msg) => {
     }
 });
 
-// ৩. অটো রিঅ্যাকশন
+// ৩. অটো রিঅ্যাকশন (Auto Reaction)
 bot.on('message', async (msg) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -66,7 +66,7 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ৪. /info কমান্ড (নতুন এপিআই ইন্টিগ্রেশন)
+// ৪. /info কমান্ড (প্লেয়ার ইনফো ও আউটফিট সহ)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -77,7 +77,6 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
     const loadingMsg = await bot.sendMessage(chatId, "🔍 তথ্য খোঁজা হচ্ছে, দয়া করে অপেক্ষা করুন...");
 
     try {
-        // দুটি এপিআই থেকে ডেটা ফেচ করা
         const infoUrl = `https://ff.emonaxc.com/info/?ajax=info&uid=${uid}`;
         const outfitUrl = `https://ff.emonaxc.com/info/?ajax=outfit&uid=${uid}&details=true`;
 
@@ -89,28 +88,26 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
         const data = infoRes.data;
         const outfitData = outfitRes.data;
 
-        if (!data || data.status !== "success" || !data.basicInfo) {
+        if (!data || (!data.basicInfo && !data.nickname && !data.accountId)) {
             await bot.deleteMessage(chatId, loadingMsg.message_id);
             return bot.sendMessage(chatId, "❌ কোনো তথ্য পাওয়া যায়নি! সঠিক UID দিন।");
         }
 
-        const basic = data.basicInfo || {};
-        const clan = data.clanBasicInfo || {};
-        const captain = data.captainBasicInfo || {};
-        const pet = data.petInfo || {};
-        const social = data.socialInfo || {};
+        const basic = data.basicInfo || data; 
+        const clan = data.clanBasicInfo || data.clan || {};
+        const pet = data.petInfo || data.pet || {};
+        const social = data.socialInfo || data.social || {};
 
-        // মেসেজের টেক্সট ফরম্যাট
         const responseText = 
 `🎮 *Free Fire Player Information*
 
 👤 *Basic Info:*
 • Name: ${basic.nickname || 'N/A'}
-• UID: ${basic.accountId || uid}
+• UID: ${basic.accountId || basic.uid || uid}
 • Level: ${basic.level || 'N/A'}
-• Likes: ${basic.liked || 0}
+• Likes: ${basic.liked || 'N/A'}
 • Region: ${basic.region || 'N/A'}
-• Account Type: ${basic.accountType || 'Guest'}
+• Account Type: ${basic.accountType || 'N/A'}
 • Created: ${basic.createAt || 'N/A'}
 
 🏆 *Rank Information:*
@@ -147,8 +144,8 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 
         await bot.deleteMessage(chatId, loadingMsg.message_id);
 
-        // ব্যানার বা আউটফিটের ছবি পাঠানোর অপশন
-        const bannerUrl = outfitData?.bannerUrl || outfitData?.outfitUrl || outfitData?.image;
+        // ব্যানার বা আউটফিটের ছবি খোঁজা
+        const bannerUrl = outfitData?.bannerUrl || outfitData?.outfitUrl || outfitData?.image || outfitData?.url;
 
         if (bannerUrl) {
             await bot.sendPhoto(chatId, bannerUrl, {
@@ -160,17 +157,17 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
         }
 
     } catch (error) {
-        console.error("Info Fetch Error:", error);
+        console.error("Info Fetch Error:", error.message);
         try {
             await bot.deleteMessage(chatId, loadingMsg.message_id);
         } catch (e) {}
-        bot.sendMessage(chatId, "❌ তথ্য নিয়ে সমস্যায় পড়েছে। কিছুক্ষণ পর আবার চেষ্টা করুন।");
+        bot.sendMessage(chatId, "❌ তথ্য নিতে সমস্যা হয়েছে, আবার চেষ্টা করুন।");
     }
 });
 
-// Render/Server Keep-Alive Port
+// Render সার্ভার চালু রাখার জন্য বেসিক পোর্ট সার্ভার
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end('Bot is running');
+    res.end('Bot is running successfully');
 }).listen(PORT);
