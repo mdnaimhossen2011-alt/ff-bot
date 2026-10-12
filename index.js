@@ -66,7 +66,7 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ৪. /info কমান্ড
+// ৪. /info কমান্ড (কাস্টম টেমপ্লেট)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -84,7 +84,6 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
         };
 
-        // আলাদাভাবে API ফেচ করা যেন একটি ফেল করলেও সমস্যা না হয়
         let data = null;
         let outfitData = null;
 
@@ -107,60 +106,96 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             return bot.sendMessage(chatId, "❌ কোনো তথ্য পাওয়া যায়নি! সঠিক UID দিন।");
         }
 
-        // এপিআই রেসপন্স অবজেক্ট বের করা
+        // ঢাকা টাইমজোনে ডেট ফরম্যাট করার ফাংশন
+        function formatDhakaDate(timestamp) {
+            if (!timestamp || isNaN(timestamp)) return 'N/A';
+            const date = new Date(timestamp > 10000000000 ? timestamp : timestamp * 1000);
+            return date.toLocaleString('en-US', { 
+                timeZone: 'Asia/Dhaka',
+                day: '2-digit', 
+                month: 'short', 
+                year: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: true 
+            });
+        }
+
+        // অ্যাকাউন্টের বয়স (Years, Months, Days) হিসেব করার ফাংশন
+        function calculateAccountAge(timestamp) {
+            if (!timestamp || isNaN(timestamp)) return { years: 0, months: 0, days: 0 };
+            const createDate = new Date(timestamp > 10000000000 ? timestamp : timestamp * 1000);
+            const now = new Date();
+
+            let years = now.getFullYear() - createDate.getFullYear();
+            let months = now.getMonth() - createDate.getMonth();
+            let days = now.getDate() - createDate.getDate();
+
+            if (days < 0) {
+                months--;
+                const lastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+                days += lastMonth.getDate();
+            }
+            if (months < 0) {
+                years--;
+                months += 12;
+            }
+
+            return { years, months, days };
+        }
+
         const basic = data.basicInfo || data.accountInfo || data.data || data;
         const clan = data.clanBasicInfo || data.guildInfo || data.clan || {};
-        const pet = data.petInfo || data.pet || {};
         const social = data.socialInfo || data.social || {};
 
-        // মেসেজের টেক্সট ফরম্যাট তৈরি
+        const cleanGender = (social.gender || basic.gender || 'MALE').replace('Gender_', '');
+        const cleanLang = (social.language || basic.language || 'EN').replace('Language_', '');
+        const cleanMode = (social.modePrefer || '').replace('ModePrefer_', '') || 'CS';
+
+        const createTimestamp = basic.createAt || basic.createdAt;
+        const age = calculateAccountAge(createTimestamp);
+
+        // আপনার দেওয়া সুনির্দিষ্ট ফরম্যাট
         const responseText = 
-`🎮 Free Fire Player Information
+`╔═══『 🎮 PLAYER INFO 』═══╗
 
-👤 Basic Info:
-• Name: ${basic.nickname || basic.name || 'N/A'}
-• UID: ${basic.accountId || basic.uid || uid}
-• Level: ${basic.level || 'N/A'}
-• Likes: ${basic.liked || basic.likes || 0}
-• Region: ${basic.region || 'BD'}
-• Account Type: ${basic.accountType || 'Guest'}
-• Created: ${basic.createAt || basic.createdAt || 'N/A'}
+👤 BASIC INFO
+➤ Name: ${basic.nickname || basic.name || 'N/A'}
+➤ UID: ${basic.accountId || basic.uid || uid}
+➤ Level: ${basic.level || 'N/A'}
+➤ Likes: ${basic.liked || basic.likes || 0}
+➤ Region: ${basic.region || 'BD'}
+➤ Account Type: ${basic.accountType || 'Guest'}
+➤ Created: ${formatDhakaDate(createTimestamp)}
 
-🏆 Rank Information:
-• BR Rank: ${basic.brRank || 'Unranked'} (${basic.brRankPoint || basic.brPoints || 0} pts)
-• CS Rank: ${basic.csRank || 'Unranked'} (${basic.csRankPoint || basic.csPoints || 0}★)
-• Max BR Rank: ${basic.maxBrRank || 'Unranked'}
-• Max CS Rank: ${basic.maxCsRank || 'Unranked'}
+╠═══『 📝 BIO & SIGNATURE 』═══╣
+💬 Bio: ${social.signature || basic.signature || social.bio || 'None'}
 
-🏠 Guild Information:
-• Name: ${clan.clanName || clan.name || 'None'}
-• ID: ${clan.clanId || clan.id || 'N/A'}
-• Level: ${clan.clanLevel || clan.level || 'N/A'}
-• Members: ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
+╠═══『 📅 ACCOUNT DETAILS 』═══╣
+🗓️ Account Created (Dhaka Time): ${formatDhakaDate(createTimestamp)}
 
-🐾 Pet Information:
-• Name: ${pet.name || 'No Pet'}
-• Level: ${pet.level || 'N/A'}
-• Skin: ${pet.skinId || pet.skin || 'N/A'}
+⏳ Account Age:
+➤ Years: ${age.years}
+➤ Months: ${age.months}
+➤ Days: ${age.days}
 
-📊 Other Stats:
-• Badges: ${basic.badgeCnt || basic.badges || 0}
-• EXP: ${basic.exp || 0}
-• Honor Score: ${basic.honorScore || 100}
-• Season ID: ${basic.seasonId || 'N/A'}
-• Version: ${basic.version || 'OB55'}
-• Last Login: ${basic.lastLoginAt || basic.lastLogin || 'N/A'}
+╠═══『 🏆 GUILD INFORMATION 』═══╣
+🛡️ Name: ${clan.clanName || clan.name || 'None'}
+➤ ID: ${clan.clanId || clan.id || 'N/A'}
+➤ Level: ${clan.clanLevel || clan.level || 'N/A'}
+➤ Members: ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
 
-🔰 Social Info:
-• Gender: ${social.gender || 'MALE'}
-• Language: ${social.language || 'EN'}
-• Active Time: ${social.activeTime || 'Unknown'}
-• Online Time: ${social.onlineTime || 'Unknown'}
-• Mode Prefer: ${social.modePrefer || 'CS'}`;
+╠═══『 🌐 SOCIAL INFO 』═══╣
+🚻 Gender: ${cleanGender}
+🗣️ Language: ${cleanLang}
+🕒 Active Time: ${social.activeTime || 'Unknown'}
+⏰ Online Time: ${social.onlineTime || 'Unknown'}
+🎯 Mode Prefer: ${cleanMode}
+
+╚══════『 👑 FF 』══════╝`;
 
         await bot.deleteMessage(chatId, loadingMsg.message_id);
 
-        // ইমেজের লিঙ্ক বের করা
         let imageUrl = null;
         if (outfitData) {
             imageUrl = outfitData.outfitUrl || outfitData.bannerUrl || outfitData.image || outfitData.url;
