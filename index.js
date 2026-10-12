@@ -17,7 +17,7 @@ bot.onText(/\/start/, (msg) => {
     const chatType = msg.chat.type;
 
     if (chatType === 'private') {
-        const textMessage = "⚠️ **এই বটটি পার্সোনাল কাজ করে না!**\n\nবটটি ব্যবহার করার জন্য আমাদের অফিশিয়াল গ্রুপে যুক্ত হয়ে কমান্ড দিন।";
+        const textMessage = "⚠️ *এই বটটি পার্সোনাল কাজ করে না!*\n\nবটটি ব্যবহার করার জন্য আমাদের অফিশিয়াল গ্রুপে যুক্ত হয়ে কমান্ড দিন।";
         const options = {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -36,11 +36,11 @@ bot.onText(/\/help/, (msg) => {
     const chatType = msg.chat.type;
 
     if (chatType === 'group' || chatType === 'supergroup') {
-        const helpMessage = "📖 **বট ব্যবহার করার নিয়মাবলী:**\n\n" +
-            "📌 Player Info দেখতে:\n" +
+        const helpMessage = "📖 *বট ব্যবহার করার নিয়মাবলী:*\n\n" +
+            "📌 *Player Info দেখতে:*\n" +
             "• নিয়ম: `/info <UID>`\n" +
             "• উদাহরণ: `/info 1720799848`\n\n" +
-            "💡 মনে রাখবেন: বটটি শুধুমাত্র গ্রুপেই কাজ করে!";
+            "💡 *মনে রাখবেন: বটটি শুধুমাত্র গ্রুপেই কাজ করে!*";
         bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
     }
 });
@@ -66,7 +66,7 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ৪. /info কমান্ড (কাস্টম টেমপ্লেট)
+// ৪. /info কমান্ড (বোল্ড টেক্সট ও ১০-ট্যাপ কপি বায়ো সহ)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -154,45 +154,46 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 
         const createTimestamp = basic.createAt || basic.createdAt;
         const age = calculateAccountAge(createTimestamp);
+        
+        // বায়ো টেক্সট এক ক্লিকে কপির জন্য
+        const bioText = social.signature || basic.signature || social.bio || 'None';
 
-        // আপনার দেওয়া সুনির্দিষ্ট ফরম্যাট
+        // বোল্ড ফরম্যাটিং সহ কাস্টম টেমপ্লেট
         const responseText = 
-`╔═══『 🎮 PLAYER INFO 』═══╗
+`╔═══『 🎮 *PLAYER INFO* 』═══╗
 
-👤 BASIC INFO
-➤ Name: ${basic.nickname || basic.name || 'N/A'}
-➤ UID: ${basic.accountId || basic.uid || uid}
-➤ Level: ${basic.level || 'N/A'}
-➤ Likes: ${basic.liked || basic.likes || 0}
-➤ Region: ${basic.region || 'BD'}
-➤ Account Type: ${basic.accountType || 'Guest'}
-➤ Created: ${formatDhakaDate(createTimestamp)}
+👤 *BASIC INFO*
+➤ *Name:* ${basic.nickname || basic.name || 'N/A'}
+➤ *UID:* \`${basic.accountId || basic.uid || uid}\`
+➤ *Level:* ${basic.level || 'N/A'}
+➤ *Likes:* ${basic.liked || basic.likes || 0}
+➤ *Region:* ${basic.region || 'BD'}
+➤ *Account Type:* ${basic.accountType || 'Guest'}
+➤ *Created:* ${formatDhakaDate(createTimestamp)}
 
-╠═══『 📝 BIO & SIGNATURE 』═══╣
-💬 Bio: ${social.signature || basic.signature || social.bio || 'None'}
+╠═══『 📝 *BIO & SIGNATURE* 』═══╣
+💬 *Bio:* \`${bioText}\`
 
-╠═══『 📅 ACCOUNT DETAILS 』═══╣
-🗓️ Account Created (Dhaka Time): ${formatDhakaDate(createTimestamp)}
+╠═══『 📅 *ACCOUNT DETAILS* 』═══╣
+⏳ *Account Age:*
+➤ *Years:* ${age.years}
+➤ *Months:* ${age.months}
+➤ *Days:* ${age.days}
 
-⏳ Account Age:
-➤ Years: ${age.years}
-➤ Months: ${age.months}
-➤ Days: ${age.days}
+╠═══『 🏆 *GUILD INFORMATION* 』═══╣
+🛡️ *Name:* ${clan.clanName || clan.name || 'None'}
+➤ *ID:* \`${clan.clanId || clan.id || 'N/A'}\`
+➤ *Level:* ${clan.clanLevel || clan.level || 'N/A'}
+➤ *Members:* ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
 
-╠═══『 🏆 GUILD INFORMATION 』═══╣
-🛡️ Name: ${clan.clanName || clan.name || 'None'}
-➤ ID: ${clan.clanId || clan.id || 'N/A'}
-➤ Level: ${clan.clanLevel || clan.level || 'N/A'}
-➤ Members: ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
+╠═══『 🌐 *SOCIAL INFO* 』═══╣
+🚻 *Gender:* ${cleanGender}
+🗣️ *Language:* ${cleanLang}
+🕒 *Active Time:* ${social.activeTime || 'Unknown'}
+⏰ *Online Time:* ${social.onlineTime || 'Unknown'}
+🎯 *Mode Prefer:* ${cleanMode}
 
-╠═══『 🌐 SOCIAL INFO 』═══╣
-🚻 Gender: ${cleanGender}
-🗣️ Language: ${cleanLang}
-🕒 Active Time: ${social.activeTime || 'Unknown'}
-⏰ Online Time: ${social.onlineTime || 'Unknown'}
-🎯 Mode Prefer: ${cleanMode}
-
-╚══════『 👑 FF 』══════╝`;
+╚══════『 👑 *FF* 』══════╝`;
 
         await bot.deleteMessage(chatId, loadingMsg.message_id);
 
@@ -203,10 +204,13 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 
         if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
             await bot.sendPhoto(chatId, imageUrl, {
-                caption: responseText
+                caption: responseText,
+                parse_mode: 'Markdown'
             });
         } else {
-            await bot.sendMessage(chatId, responseText);
+            await bot.sendMessage(chatId, responseText, {
+                parse_mode: 'Markdown'
+            });
         }
 
     } catch (error) {
