@@ -1,13 +1,13 @@
 {
-  "name": "ff-info-bot",
+  "name": "ff-bot",
   "version": "1.0.0",
-  "description": "Free Fire Info Telegram Bot",
+  "description": "Free Fire Telegram Bot",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "axios": "^1.6.0",
-    "node-telegram-bot-api": "^0.64.0"
+    "axios": "^1.6.8",
+    "node-telegram-bot-api": "^0.65.1"
   }
 }
