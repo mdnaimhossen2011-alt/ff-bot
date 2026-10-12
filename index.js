@@ -66,7 +66,7 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ৪. /info কমান্ড (আপনার দেওয়া নতুন ডিজাইনে)
+// ৪. /info কমান্ড (সুন্দর ও ক্লিন লেআউট)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -118,7 +118,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             });
         }
 
-        // অ্যাকাউন্টের বয়স গণনা (Years, Months)
+        // অ্যাকাউন্টের বয়স গণনা
         function calculateAccountAge(timestamp) {
             if (!timestamp || isNaN(timestamp)) return { years: 0, months: 0 };
             const createDate = new Date(timestamp > 10000000000 ? timestamp : timestamp * 1000);
@@ -146,61 +146,49 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
         const createTimestamp = basic.createAt || basic.createdAt;
         const age = calculateAccountAge(createTimestamp);
         
-        // বায়ো টেক্সট ক্লিয়ার করা
-        let bioText = social.signature || basic.signature || social.bio || 'None';
-        bioText = bioText.replace(/[\r\n]+/g, " ");
+        // বায়ো ফিল্টারিং (কালার কোড ও নতুন লাইন রিমুভ)
+        let rawBio = social.signature || basic.signature || social.bio || 'None';
+        let cleanBio = rawBio.replace(/\[\/?\w+\]|\[[0-9A-Fa-f]{6}\]/g, '').replace(/[\r\n]+/g, ' ').trim();
+        if (!cleanBio) cleanBio = 'None';
 
-        // সংখ্যাগুলোকে কমা ফরম্যাটে রূপান্তর (যেমন: 31,114)
         const formattedLikes = Number(basic.liked || basic.likes || 0).toLocaleString('en-US');
 
-        // আপনার দেওয়া সুনির্দিষ্ট HTML ডিজাইন
+        // মোবাইল ফ্রেন্ডলি ও পারফেক্ট রেসপন্স ডিজাইন
         const responseText = 
-`╭━━━〔 🎮 <b>FREE FIRE PROFILE</b> 〕━━━╮
+`🎮 <b>FREE FIRE PLAYER PROFILE</b>
+──────────────────
 
 👤 <b>PLAYER INFORMATION</b>
+• <b>Name:</b> ${basic.nickname || basic.name || 'N/A'}
+• <b>UID:</b> <code>${basic.accountId || basic.uid || uid}</code>
+• <b>Level:</b> ${basic.level || 'N/A'}
+• <b>Likes:</b> ❤️ ${formattedLikes}
+• <b>Region:</b> 🇧🇩 ${basic.region || 'BD'}
 
-➤ <b>Name:</b> ${basic.nickname || basic.name || 'N/A'} 
-➤ <b>UID:</b> <code>${basic.accountId || basic.uid || uid}</code> 
-➤ <b>Level:</b> ${basic.level || 'N/A'} 
-➤ <b>Likes:</b> ❤️ ${formattedLikes} 
-➤ <b>Region:</b> 🇧🇩 ${basic.region || 'Bangladesh'}
+📝 <b>BIO & SIGNATURE</b>
+💬 <code>${cleanBio}</code>
 
-╰━━━━━━━━━━━━━━━━━━━━╯
+🛡️ <b>GUILD INFORMATION</b>
+• <b>Guild:</b> ${clan.clanName || clan.name || 'None'}
+• <b>Guild ID:</b> <code>${clan.clanId || clan.id || 'N/A'}</code>
+• <b>Level:</b> ${clan.clanLevel || clan.level || 'N/A'}
+• <b>Members:</b> ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
 
-╭━━━〔 📝 <b>BIO & SIGNATURE</b> 〕━━━╮
+🌐 <b>SOCIAL INFORMATION</b>
+• <b>Gender:</b> ${cleanGender}
+• <b>Language:</b> ${cleanLang}
+• <b>Preferred Mode:</b> ${cleanMode}
+• <b>Active Time:</b> ${social.activeTime || 'Unknown'}
+• <b>Online Time:</b> ${social.onlineTime || 'Unknown'}
 
-💬 <code>${bioText}</code>
+👑 <b>ACCOUNT DETAILS</b>
+• <b>Created:</b> ${formatDhakaDate(createTimestamp)}
+• <b>Account Type:</b> ${basic.accountType || '1'}
+• <b>Account Age:</b> ${age.years} Years, ${age.months} Months
 
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-╭━━━〔 🛡️ <b>GUILD INFORMATION</b> 〕━━━╮
-
-♛ <b>Guild:</b> ${clan.clanName || clan.name || 'None'} 
-🆔 <b>Guild ID:</b> <code>${clan.clanId || clan.id || 'N/A'}</code> 
-⭐ <b>Guild Level:</b> ${clan.clanLevel || clan.level || 'N/A'} 
-👥 <b>Members:</b> ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
-
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-╭━━━〔 🌐 <b>SOCIAL INFORMATION</b> 〕━━━╮
-
-🚹 <b>Gender:</b> ${cleanGender} 
-🗣️ <b>Language:</b> ${cleanLang} 
-🎯 <b>Preferred Mode:</b> ${cleanMode} 
-🕒 <b>Active Time:</b> ${social.activeTime || 'Unknown'} 
-⏰ <b>Online Time:</b> ${social.onlineTime || 'Unknown'}
-
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-╭━━━〔 👑 <b>ACCOUNT DETAILS</b> 〕━━━╮
-
-📅 <b>Created:</b> ${formatDhakaDate(createTimestamp)} 
-📊 <b>Account Type:</b> ${basic.accountType || '1'} 
-⏳ <b>Account Age:</b> ${age.years} Years, ${age.months} Months
-
-╰━━━━━━━━━━━━━━━━━━━━╯
-
-⚡ <b>『 亗 FREE FIRE LEGEND 亗 』</b> 🔥 <i>Powered by FF Profile Bot</i>`;
+──────────────────
+⚡ <b>『 亗 FREE FIRE LEGEND 亗 』</b>
+🔥 <i>Powered by FF Profile Bot</i>`;
 
         await bot.deleteMessage(chatId, loadingMsg.message_id);
 
