@@ -78,72 +78,81 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 
     try {
         const infoUrl = `https://ff.emonaxc.com/info/?ajax=info&uid=${uid}`;
-        const outfitUrl = `https://ff.emonaxc.com/info/?ajax=outfit&details=true&speed=fast&uid=${uid}`;
+        const outfitUrl = `https://ff.emonaxc.com/info/?ajax=outfit&uid=${uid}&details=true`;
 
-        const axiosConfig = {
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
-            },
-            timeout: 10000
+        const headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36'
         };
 
-        const [infoRes, outfitRes] = await Promise.all([
-            axios.get(infoUrl, axiosConfig).catch(e => ({ data: null })),
-            axios.get(outfitUrl, axiosConfig).catch(e => ({ data: null }))
-        ]);
+        // আলাদাভাবে API ফেচ করা যেন একটি ফেল করলেও সমস্যা না হয়
+        let data = null;
+        let outfitData = null;
 
-        const data = infoRes.data;
-        const outfitData = outfitRes.data;
+        try {
+            const infoRes = await axios.get(infoUrl, { headers, timeout: 8000 });
+            data = infoRes.data;
+        } catch (e) {
+            console.error("Info API Error:", e.message);
+        }
+
+        try {
+            const outfitRes = await axios.get(outfitUrl, { headers, timeout: 8000 });
+            outfitData = outfitRes.data;
+        } catch (e) {
+            console.error("Outfit API Error:", e.message);
+        }
 
         if (!data) {
             await bot.deleteMessage(chatId, loadingMsg.message_id);
             return bot.sendMessage(chatId, "❌ কোনো তথ্য পাওয়া যায়নি! সঠিক UID দিন।");
         }
 
-        const basic = data.basicInfo || data.BasicInfo || data; 
-        const clan = data.clanBasicInfo || data.ClanInfo || data.clan || {};
-        const pet = data.petInfo || data.PetInfo || data.pet || {};
-        const social = data.socialInfo || data.SocialInfo || data.social || {};
+        // এপিআই রেসপন্স অবজেক্ট বের করা
+        const basic = data.basicInfo || data.accountInfo || data.data || data;
+        const clan = data.clanBasicInfo || data.guildInfo || data.clan || {};
+        const pet = data.petInfo || data.pet || {};
+        const social = data.socialInfo || data.social || {};
 
+        // মেসেজের টেক্সট ফরম্যাট তৈরি
         const responseText = 
-`🎮 *Free Fire Player Information*
+`🎮 Free Fire Player Information
 
-👤 *Basic Info:*
-• Name: ${basic.nickname || basic.Name || 'N/A'}
-• UID: ${basic.accountId || basic.UID || uid}
-• Level: ${basic.level || basic.Level || 'N/A'}
-• Likes: ${basic.liked || basic.Likes || 0}
-• Region: ${basic.region || basic.Region || 'BD'}
-• Account Type: ${basic.accountType || basic.AccountType || 'Guest'}
-• Created: ${basic.createAt || basic.Created || 'N/A'}
+👤 Basic Info:
+• Name: ${basic.nickname || basic.name || 'N/A'}
+• UID: ${basic.accountId || basic.uid || uid}
+• Level: ${basic.level || 'N/A'}
+• Likes: ${basic.liked || basic.likes || 0}
+• Region: ${basic.region || 'BD'}
+• Account Type: ${basic.accountType || 'Guest'}
+• Created: ${basic.createAt || basic.createdAt || 'N/A'}
 
-🏆 *Rank Information:*
-• BR Rank: ${basic.brRank || 'Unranked'} (${basic.brRankPoint || 0} pts)
-• CS Rank: ${basic.csRank || 'Unranked'} (${basic.csRankPoint || 0}★)
+🏆 Rank Information:
+• BR Rank: ${basic.brRank || 'Unranked'} (${basic.brRankPoint || basic.brPoints || 0} pts)
+• CS Rank: ${basic.csRank || 'Unranked'} (${basic.csRankPoint || basic.csPoints || 0}★)
 • Max BR Rank: ${basic.maxBrRank || 'Unranked'}
 • Max CS Rank: ${basic.maxCsRank || 'Unranked'}
 
-🏠 *Guild Information:*
-• Name: ${clan.clanName || clan.Name || 'None'}
-• ID: ${clan.clanId || clan.ID || 'N/A'}
-• Level: ${clan.clanLevel || clan.Level || 'N/A'}
-• Members: ${clan.memberNum || clan.Members || 0}/${clan.capacity || 50}
+🏠 Guild Information:
+• Name: ${clan.clanName || clan.name || 'None'}
+• ID: ${clan.clanId || clan.id || 'N/A'}
+• Level: ${clan.clanLevel || clan.level || 'N/A'}
+• Members: ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
 
-🐾 *Pet Information:*
-• Name: ${pet.name || pet.Name || 'No Pet'}
-• Level: ${pet.level || pet.Level || 'N/A'}
-• Skin: ${pet.skinId || pet.Skin || 'N/A'}
+🐾 Pet Information:
+• Name: ${pet.name || 'No Pet'}
+• Level: ${pet.level || 'N/A'}
+• Skin: ${pet.skinId || pet.skin || 'N/A'}
 
-📊 *Other Stats:*
-• Badges: ${basic.badgeCnt || basic.Badges || 0}
-• EXP: ${basic.exp || basic.EXP || 0}
+📊 Other Stats:
+• Badges: ${basic.badgeCnt || basic.badges || 0}
+• EXP: ${basic.exp || 0}
 • Honor Score: ${basic.honorScore || 100}
 • Season ID: ${basic.seasonId || 'N/A'}
 • Version: ${basic.version || 'OB55'}
-• Last Login: ${basic.lastLoginAt || 'N/A'}
+• Last Login: ${basic.lastLoginAt || basic.lastLogin || 'N/A'}
 
-🔰 *Social Info:*
-• Gender: ${social.gender || social.Gender || 'MALE'}
+🔰 Social Info:
+• Gender: ${social.gender || 'MALE'}
 • Language: ${social.language || 'EN'}
 • Active Time: ${social.activeTime || 'Unknown'}
 • Online Time: ${social.onlineTime || 'Unknown'}
@@ -151,20 +160,22 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
 
         await bot.deleteMessage(chatId, loadingMsg.message_id);
 
-        // ব্যানার বা ইমেজ লিংক ইউআরএল থেকে সংগ্রহ করা
-        const bannerUrl = outfitData?.image || outfitData?.outfitUrl || outfitData?.bannerUrl || outfitData?.url || outfitData?.outfit;
+        // ইমেজের লিঙ্ক বের করা
+        let imageUrl = null;
+        if (outfitData) {
+            imageUrl = outfitData.outfitUrl || outfitData.bannerUrl || outfitData.image || outfitData.url;
+        }
 
-        if (bannerUrl && typeof bannerUrl === 'string' && bannerUrl.startsWith('http')) {
-            await bot.sendPhoto(chatId, bannerUrl, {
-                caption: responseText,
-                parse_mode: 'Markdown'
+        if (imageUrl && typeof imageUrl === 'string' && imageUrl.startsWith('http')) {
+            await bot.sendPhoto(chatId, imageUrl, {
+                caption: responseText
             });
         } else {
-            await bot.sendMessage(chatId, responseText, { parse_mode: 'Markdown' });
+            await bot.sendMessage(chatId, responseText);
         }
 
     } catch (error) {
-        console.error("Info Error Details:", error);
+        console.error("Main Error:", error);
         try {
             await bot.deleteMessage(chatId, loadingMsg.message_id);
         } catch (e) {}
