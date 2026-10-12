@@ -17,7 +17,7 @@ bot.onText(/\/start/, (msg) => {
     const chatType = msg.chat.type;
 
     if (chatType === 'private') {
-        const textMessage = "⚠️ *এই বটটি পার্সোনাল কাজ করে না!*\n\nবটটি ব্যবহার করার জন্য আমাদের অফিশিয়াল গ্রুপে যুক্ত হয়ে কমান্ড দিন।";
+        const textMessage = "⚠️ **এই বটটি পার্সোনাল কাজ করে না!**\n\nবটটি ব্যবহার করার জন্য আমাদের অফিশিয়াল গ্রুপে যুক্ত হয়ে কমান্ড দিন।";
         const options = {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -36,11 +36,11 @@ bot.onText(/\/help/, (msg) => {
     const chatType = msg.chat.type;
 
     if (chatType === 'group' || chatType === 'supergroup') {
-        const helpMessage = "📖 *বট ব্যবহার করার নিয়মাবলী:*\n\n" +
-            "📌 *Player Info দেখতে:*\n" +
+        const helpMessage = "📖 **বট ব্যবহার করার নিয়মাবলী:**\n\n" +
+            "📌 **Player Info দেখতে:**\n" +
             "• নিয়ম: `/info <UID>`\n" +
             "• উদাহরণ: `/info 1720799848`\n\n" +
-            "💡 *মনে রাখবেন: বটটি শুধুমাত্র গ্রুপেই কাজ করে!*";
+            "💡 **মনে রাখবেন: বটটি শুধুমাত্র গ্রুপেই কাজ করে!**";
         bot.sendMessage(chatId, helpMessage, { parse_mode: 'Markdown' });
     }
 });
@@ -66,7 +66,7 @@ bot.on('message', async (msg) => {
     }
 });
 
-// ৪. /info কমান্ড (বোল্ড টেক্সট ও ১০-ট্যাপ কপি বায়ো সহ)
+// ৪. /info কমান্ড (সম্পূর্ণ গোছানো ফরম্যাট)
 bot.onText(/\/info (.+)/, async (msg, match) => {
     const chatId = msg.chat.id;
     const chatType = msg.chat.type;
@@ -106,14 +106,14 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             return bot.sendMessage(chatId, "❌ কোনো তথ্য পাওয়া যায়নি! সঠিক UID দিন।");
         }
 
-        // ঢাকা টাইমজোনে ডেট ফরম্যাট করার ফাংশন
+        // ঢাকা টাইমজোনে তারিখ ও সময় ফরম্যাট
         function formatDhakaDate(timestamp) {
             if (!timestamp || isNaN(timestamp)) return 'N/A';
             const date = new Date(timestamp > 10000000000 ? timestamp : timestamp * 1000);
             return date.toLocaleString('en-US', { 
                 timeZone: 'Asia/Dhaka',
-                day: '2-digit', 
                 month: 'short', 
+                day: '2-digit', 
                 year: 'numeric', 
                 hour: '2-digit', 
                 minute: '2-digit',
@@ -121,7 +121,7 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
             });
         }
 
-        // অ্যাকাউন্টের বয়স (Years, Months, Days) হিসেব করার ফাংশন
+        // অ্যাকাউন্টের বয়স গণনা (Years, Months, Days)
         function calculateAccountAge(timestamp) {
             if (!timestamp || isNaN(timestamp)) return { years: 0, months: 0, days: 0 };
             const createDate = new Date(timestamp > 10000000000 ? timestamp : timestamp * 1000);
@@ -155,45 +155,44 @@ bot.onText(/\/info (.+)/, async (msg, match) => {
         const createTimestamp = basic.createAt || basic.createdAt;
         const age = calculateAccountAge(createTimestamp);
         
-        // বায়ো টেক্সট এক ক্লিকে কপির জন্য
-        const bioText = social.signature || basic.signature || social.bio || 'None';
+        // বায়ো এক ক্লিকে কপির জন্য এবং নিউলাইন ঠিক রাখতে
+        let bioText = social.signature || basic.signature || social.bio || 'None';
+        bioText = bioText.replace(/[\r\n]+/g, " "); // নতুন লাইন থাকলে মেসেজ ভাঙবে না
 
-        // বোল্ড ফরম্যাটিং সহ কাস্টম টেমপ্লেট
+        // একদম ক্লিন ও সৌন্দর্যপূর্ণ টেমপ্লেট
         const responseText = 
-`╔═══『 🎮 *PLAYER INFO* 』═══╗
+`╔═════『 🎮 PLAYER INFO 』═════╗
 
-👤 *BASIC INFO*
-➤ *Name:* ${basic.nickname || basic.name || 'N/A'}
-➤ *UID:* \`${basic.accountId || basic.uid || uid}\`
-➤ *Level:* ${basic.level || 'N/A'}
-➤ *Likes:* ${basic.liked || basic.likes || 0}
-➤ *Region:* ${basic.region || 'BD'}
-➤ *Account Type:* ${basic.accountType || 'Guest'}
-➤ *Created:* ${formatDhakaDate(createTimestamp)}
+👤 BASIC INFO
+➤ Name: ${basic.nickname || basic.name || 'N/A'}
+➤ UID: \`${basic.accountId || basic.uid || uid}\`
+➤ Level: ${basic.level || 'N/A'}
+➤ Likes: ${basic.liked || basic.likes || 0}
+➤ Region: ${basic.region || 'BD'}
+➤ Account Type: ${basic.accountType || '1'}
+➤ Created: ${formatDhakaDate(createTimestamp)}
+➤ ⏳ Account Age:
+    • Years: ${age.years}
+    • Months: ${age.months}
+    • Days: ${age.days}
 
-╠═══『 📝 *BIO & SIGNATURE* 』═══╣
-💬 *Bio:* \`${bioText}\`
+╠═════『 📝 BIO & SIGNATURE 』═════╣
+💬 Bio: \`${bioText}\`
 
-╠═══『 📅 *ACCOUNT DETAILS* 』═══╣
-⏳ *Account Age:*
-➤ *Years:* ${age.years}
-➤ *Months:* ${age.months}
-➤ *Days:* ${age.days}
+╠═════『 🏆 GUILD INFORMATION 』═════╣
+🛡️ Name: ${clan.clanName || clan.name || 'None'}
+➤ ID: \`${clan.clanId || clan.id || 'N/A'}\`
+➤ Level: ${clan.clanLevel || clan.level || 'N/A'}
+➤ Members: ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
 
-╠═══『 🏆 *GUILD INFORMATION* 』═══╣
-🛡️ *Name:* ${clan.clanName || clan.name || 'None'}
-➤ *ID:* \`${clan.clanId || clan.id || 'N/A'}\`
-➤ *Level:* ${clan.clanLevel || clan.level || 'N/A'}
-➤ *Members:* ${clan.memberNum || clan.members || 0}/${clan.capacity || 50}
+╠═════『 🌐 SOCIAL INFO 』═════╣
+🚻 Gender: ${cleanGender}
+🗣️ Language: ${cleanLang}
+🕒 Active Time: ${social.activeTime || 'Unknown'}
+⏰ Online Time: ${social.onlineTime || 'Unknown'}
+🎯 Mode Prefer: ${cleanMode}
 
-╠═══『 🌐 *SOCIAL INFO* 』═══╣
-🚻 *Gender:* ${cleanGender}
-🗣️ *Language:* ${cleanLang}
-🕒 *Active Time:* ${social.activeTime || 'Unknown'}
-⏰ *Online Time:* ${social.onlineTime || 'Unknown'}
-🎯 *Mode Prefer:* ${cleanMode}
-
-╚══════『 👑 *FF* 』══════╝`;
+╚════════『 👑 FF 』════════╝`;
 
         await bot.deleteMessage(chatId, loadingMsg.message_id);
 
